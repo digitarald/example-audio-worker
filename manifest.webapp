@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "name": "Audio Worker",
-  "description": "Audio Worker",
-  "launch_path": "/index.html",
+  "name": "Example Audio Worker",
+  "description": "An example app.",
+  "launch_path": "/example-audio-worker/index.html",
   "developer": {
-    "name": "Mozilla Labs",
-    "url": "http://www.mozillalabs.com"
+    "name": "Harald Kirschner",
+    "url": "http://www.mozilla.org/en-US/firefox/partners/"
   }
 }
