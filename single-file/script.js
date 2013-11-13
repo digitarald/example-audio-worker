@@ -31,7 +31,7 @@
 		xhr.responseType = 'arraybuffer';
 
 		xhr.onload = function() {
-			$load.nextSibling.value = 'Processing ' + file;
+			$output.value = 'Processing ' + file;
 
 			// Send song to Worker for "decoding"
 			var input = xhr.response;
@@ -41,20 +41,21 @@
 			}, [input]);
 		};
 
-		$load.nextSibling.value = 'Loading ' + file;
+		$output.value = 'Loading ' + file;
 		xhr.send(null);
 	}
 
 	// DOM listeners
 	var $load = document.getElementById('load');
 	$load.onclick = playNext;
-
+	var $output = document.querySelector('output');
+	console.log($load, $output);
 
 	var decoderWorker = new Worker('../worker.js');
 
 	// Input is decoded and returned from worker
 	decoderWorker.onmessage = function(msg) {
-		$load.nextSibling.value = 'Playing ' + file;
+		$output.value = 'Playing ' + file;
 
 		// Prepare fading previous song
 		var previousAudio = null;
