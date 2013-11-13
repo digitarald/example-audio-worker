@@ -1,7 +1,7 @@
 {
   "version": "1.0",
-  "name": "Example Audio Worker",
-  "description": "An example app.",
+  "name": "Audio Examples",
+  "description": "Various audio examples.",
   "launch_path": "/example-audio-worker/index.html",
   "developer": {
     "name": "Harald Kirschner",

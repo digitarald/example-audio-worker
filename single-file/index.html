@@ -11,23 +11,16 @@
 			<div class="row">
 				<div class="col-lg-4 col-lg-offset-4">
 					<div class="page-header">
-						<h1>Encrypted Audio</h1>
+						<h1>Audio from Worker</h1>
 					</div>
-					<dl>
-						<dt><a href="./single-file/">File &gt; Worker &gt; HTML5 Audio</a></dt>
-						<dd>
-							<p>Load a encrypted file, process it in a worker and play it via HTML5 Audio API.</p>
-						</dd>
-						<dt><a href="./web-audio/">Splitted File &gt; Worker &gt; Web Audio API</a></dt>
-						<dd>
-							<p>Serially oad a splitted file, decrypt each piece and assemble a continues buffer for Web Audio API.</p>
-						</dd>
-					</dl>
+					<p class="text-center">
+						<button class="btn btn-primary" id="load">Next Song in Playlist</button>
+					</p>
+					<p><output></output></p>
 				</div>
 			</div>
 		</div>
 	</main>
-	<a href="https://github.com/digitarald/example-audio-worker/"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub"></a>
 	<footer>
 		<div class="container text-center text-muted">
 			Copyright (c) 2013 Harald Kirschner - <a href="http://opensource.org/licenses/MIT">MIT</a> License
@@ -35,5 +28,7 @@
 	</footer>
 	<script src="//code.jquery.com/jquery-2.0.3.js"></script>
 	<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.1/js/bootstrap.min.js"></script>
+	<script src="../vendor/stats.js"></script>
+	<script src="script.js"></script>
 </body>
 </html>

@@ -10,8 +10,6 @@
 
 	// Simple playlist management
 	var playlist = [
-			'mountains.ogg',
-			'castle.ogg',
 			'01_Just_Imagine_vbr.mp3',
 			'02_Pulse_of_the_Earth_vbr.mp3'
 		],
@@ -25,7 +23,7 @@
 		file = playlist[position++];
 		if (position >= playlist.length) position = 0;
 
-		var url = './playlist/' + file + '.gz';
+		var url = '../playlist/' + file + '.gz';
 
 		// Load song via XHR2 as arraybuffer
 		var xhr = new XMLHttpRequest();
@@ -52,7 +50,7 @@
 	$load.onclick = playNext;
 
 
-	var decoderWorker = new Worker('worker.js');
+	var decoderWorker = new Worker('../worker.js');
 
 	// Input is decoded and returned from worker
 	decoderWorker.onmessage = function(msg) {
@@ -133,6 +131,6 @@
 			}
 		}
 		var timer = window.setInterval(stepper, 100);
-	};
+	}
 
 })();

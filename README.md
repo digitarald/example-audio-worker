@@ -1,14 +1,12 @@
 # Audio Worker Example
 
-Showcasing
+Best practices and feasability prototypes around playing back packaged/encrypted audio in HTML5.
 
- * Request a packaged audio file (XHR2 + ArrayBuffer)
- * Transfer to a worker for processing (Transferable Objects)
- * Unpack it on worker (Emscripten + Typed Arrays)
- * Play it. (HTML5 Audio)
+http://digitarald.github.io/example-audio-worker
 
-Use cases:
+## Use cases
 
- * DRM and other decryption algorithms
+ * Encrypted media delivery and storage
+ * Audio and Video streaming
  * Decoding audio files
  * Processing/scaling images
