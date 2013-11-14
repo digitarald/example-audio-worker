@@ -1,49 +1,80 @@
 (function() {
 	'use strict';
 
-	// var song = {
-	// 	title: 'Lepidoptera',
-	// 	artist: 'Epoq',
-	// 	pattern: './../playlist/song-%d.ogg',
-	// 	parts: 21
-	// };
+	/**
+	 * Test data and loading state. In real life this should be class properties; just layed out for demo purposes here.
+	 */
 	var song = {
 		title: 'The Piano',
 		artist: 'Michael Nyman',
 		pattern: './../playlist/piano-2-%d.ogg',
-		parts: 15
+		parts: 15,
+		single: './../playlist/piano-1-%s.ogg',
+		sources: {},
+		time: 0,
+		times: [],
+		buffer: new ArrayBuffer(),
+		source: null
 	};
-	song.sources = {};
-	song.nextPart = 0;
-	song.nextTime = 0;
-	song.partTimes = [];
 
-	function loadNext() {
-		var part = song.nextPart;
-		if (part == song.parts) {
-			return;
-		}
-		song.nextPart++;
-
-		console.log('Loading %d', part);
-		var url = song.pattern.replace('%d', part);
+	/**
+	 * Queue each new source as node, aligned with the previous one
+	 */
+	function waterfallNext(index) {
+		index = index || 0;
+		var url = song.pattern.replace('%d', index);
 
 		loadArrayBuffer(url, function(data) {
-			console.log('Decode %d', part);
-			if (!part) {
-				startTime = context.currentTime;
-				song.nextTime = startTime;
-			}
-			queueArrayBuffer(data, song.nextTime, function(audioSource, time) {
-				song.nextTime = time;
-				song.partTimes.push(time);
-				song.sources[part] = audioSource;
-				loadNext();
+			context.decodeAudioData(data, function(audioBuffer) {
+				if (!index) {
+					startTime = context.currentTime;
+					song.time = startTime;
+				}
+				var result = queueArrayBuffer(audioBuffer, song.time);
+				song.time = result.time;
+				song.times.push(song.time);
+				song.sources[index] = result.source;
+				setTimeout(function() {
+					if (index + 1 < song.parts) {
+						waterfallNext(index + 1);
+					}
+				}, (index) ? 250 : 0);
 			});
 		});
 	}
 
-	var context = new AudioContext();
+	/**
+	 * Append new buffers to a new source and stop previous source
+	 */
+	function appendNext(index) {
+		index = index || 0;
+		var url = song.pattern.replace('%d', index);
+		loadArrayBuffer(url, function(data) {
+			if (!index) {
+				startTime = context.currentTime;
+			}
+			song.buffer = concatBuffers(song.buffer, data);
+
+			context.decodeAudioData(song.buffer, function(audioBuffer) {
+				var result = queueArrayBuffer(audioBuffer, startTime);
+				song.time = result.time;
+				if (song.source) {
+					song.source.stop();
+				}
+				song.source = result.source;
+				setTimeout(function() {
+					if (index + 1 < song.parts) {
+						appendNext(index + 1);
+					}
+				}, (index) ? 500 : 0);
+			});
+		});
+	}
+
+	var context = new (webkitAudioContext || AudioContext)();
+	/**
+	 * Analyzer for effects
+	 */
 	var analyser = context.createAnalyser();
 	analyser.smoothingTimeConstant = 0.5;
 	analyser.connect(context.destination);
@@ -52,11 +83,19 @@
 
 	function init() {
 		if (startTime) {
+			location.href = location.href;
 			return;
 		}
-		$play.disabled = true;
+		$play.textContent = 'Stop';
 		requestAnimationFrame(tick);
-		loadNext();
+		switch (document.getElementById('split').value) {
+			case 'waterfall':
+				waterfallNext();
+				break;
+			case 'append':
+				appendNext();
+				break;
+		}
 	}
 
 	var muted = false;
@@ -82,22 +121,31 @@
 		request.send();
 	}
 
-	function queueArrayBuffer(data, time, next) {
-		context.decodeAudioData(data, function(audioBuffer) {
-			var duration = audioBuffer.duration;
-			if (!duration) {
-				throw new Error('No duration!');
-			}
-			console.log('Loaded buffer %d / %d s', duration, time);
+	function queueArrayBuffer(audioBuffer, time, next) {
+		var duration = audioBuffer.duration;
+		if (!duration) {
+			throw new Error('No duration!');
+		}
+		var currentTime = context.currentTime;
+		time = time || currentTime;
+		var originalTime = time;
+		var offset = 0;
+		if (time < currentTime) {
+			offset = currentTime - time;
+			time = currentTime;
+		}
+		console.log('Loaded buffer %d / %d s', duration, time);
 
-			var audioSource = context.createBufferSource();
-			audioSource.connect(analyser);
+		var audioSource = context.createBufferSource();
+		audioSource.connect(analyser);
 
-			audioSource.buffer = audioBuffer;
-			audioSource.start(time);
-			audioSource.playbackRate.value = 1;
-			next(audioSource, time + duration);
-		});
+		audioSource.buffer = audioBuffer;
+		audioSource.start(time, offset);
+		audioSource.playbackRate.value = 1;
+		return {
+			time: originalTime + duration,
+			source: audioSource
+		};
 	}
 
 	var $play = document.getElementById('play');
@@ -137,26 +185,28 @@
 	 * Scrubber marker
 	 */
 	var markStyle = 'no-repeat url("arrow.png")';
-	function drawMarkers() {
-		var time = song.nextTime;
-		var current = context.currentTime - startTime;
 
-		$timeCurrent.value = Math.round(context.currentTime);
+	function drawMarkers() {
+		var time = song.time;
+		var current = context.currentTime;
+
+		$timeCurrent.value = Math.round(current);
 		$time.value = Math.round(time);
-		$scrubber.max = time;
+		$scrubber.min = Math.round(startTime);
+		$scrubber.max = Math.round(time);
 		$scrubber.value = current;
 
 		var close = false;
-		var markers = song.partTimes.map(function(value) {
-			if (Math.abs(value - current) < 0.5) {
+		var markers = song.times.forEach(function(value) {
+			if (Math.abs(value - current) < 0.2) {
 				close = true;
 			}
-			var percentage = value / time * 100;
-			return markStyle + ' ' + percentage + '% 0px';
+			// var percentage = value / time * 100;
+			// return markStyle + ' ' + percentage + '% 0px';
 		});
-		$scrubber.style.background = markers.join(', ');
+		// $scrubber.style.background = markers.join(', ');
 
-		$timeCurrent.style.color = (close) ? 'red' : 'green';
+		$scrubber.classList[(close) ? 'add' : 'remove']('marker');
 	}
 
 	function tick() {
@@ -164,6 +214,16 @@
 		drawMarkers();
 
 		requestAnimationFrame(tick);
-	};
+	}
+
+	// The unavoidable utils section
+
+	// A quick and easy way to append buffers
+	function concatBuffers(a, b) {
+		var result = new Uint8Array(a.byteLength + b.byteLength);
+		result.set(new Uint8Array(a), 0);
+		result.set(new Uint8Array(b), a.byteLength);
+		return result.buffer;
+	}
 
 })();
