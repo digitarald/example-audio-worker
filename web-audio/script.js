@@ -71,7 +71,7 @@
 		});
 	}
 
-	var context = new (webkitAudioContext || AudioContext)();
+	var context = new (window.webkitAudioContext || window.AudioContext)();
 	/**
 	 * Analyzer for effects
 	 */
